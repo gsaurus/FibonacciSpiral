@@ -5,22 +5,27 @@ using System.Collections.Generic;
 public class Fibonacci : MonoBehaviour {
 
 	public FibonacciCell cellObj;
-	public GameObject trail;
-    public float speed = 0.025f;
+	public TrailRenderer trail;
+    public float speed = 0.005f;
+    public float acc = -0.001f;
     public int cellsAhead = 10;
 
     private List<FibonacciCell> _cells = new List<FibonacciCell>();
 	private int _currentCell;
-	private float _curveT;
+	private float _curveT = -1f;
 	private FibonacciCell _selectedCell;
     private int pointCount;
 
-	float n1 = 0,n2 = 1,n3;
+    private float hue = 0.5f;
+    private Color previousColor;
+    private Color nextColor;
+
+    float n1 = 0,n2 = 1,n3;
 
 	void Start () 
 	{
         FibonacciCell firstCell = Instantiate(cellObj) as FibonacciCell;
-        float initSize = CalculateFibonacciNumber();
+        float initSize = 1;
         firstCell.cellDirection = CellDirection.up;
 
         firstCell.SetUp(0, 0, initSize, -initSize);
@@ -31,6 +36,8 @@ public class Fibonacci : MonoBehaviour {
         {
             NextCell();
         }
+        trail.endWidth = 0.33f;
+        trail.endColor = Color.white;
     }
 
 	void Update () 
@@ -39,23 +46,33 @@ public class Fibonacci : MonoBehaviour {
 		Vector3 end = Vector3.zero;
 		Vector3 middle = Vector3.zero;
 
-		if(_curveT >= 1.0f)
+		if(_curveT < 0 || _curveT >= 1.0f)
 		{
             NextCell();
-            _selectedCell = _cells[++_currentCell];
+            _selectedCell = _cells[_currentCell++];
             _curveT = 0;
+            previousColor = Color.HSVToRGB(hue, 0.8f, 0.75f);
+            hue += 0.05f;
+            if (hue > 1) hue -= 1;
+            nextColor = Color.HSVToRGB(hue, 0.8f, 0.75f);
+            speed += acc;
         }
 		SetInterpPoints (out start, out end, out middle);
-        trail.transform.position = CurveVelocity(_curveT,start,middle, end);
+        trail.gameObject.transform.position = CurveVelocity(_curveT,start,middle, end);
 
-        float distanceToCenter = trail.transform.position.magnitude;
+        float distanceToCenter = trail.gameObject.transform.position.magnitude;
 
-        float camSize = Mathf.Lerp(start.magnitude, end.magnitude, _curveT) + 2;
-        if (camSize < 10) camSize = 10;
-        Camera.main.orthographicSize = camSize;
+        float camSize = Mathf.Lerp(start.magnitude, end.magnitude, _curveT) * 1.25f;
+        if (camSize < 5) camSize = 5;
+        Camera.main.orthographicSize = Mathf.Lerp(Camera.main.orthographicSize, camSize, 0.05f);
+
+        //trail.endWidth = trail.startWidth;
+        trail.startWidth = Camera.main.orthographicSize / 10f;
+        trail.startColor = Color.Lerp(previousColor, nextColor, _curveT);
 
         _curveT += speed;
-	}
+
+    }
 
 	float CalculateFibonacciNumber()
 	{
