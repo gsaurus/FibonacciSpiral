@@ -2,55 +2,59 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[RequireComponent(typeof(LineRenderer))]
-
 public class Fibonacci : MonoBehaviour {
 
-	public int resolution = 1;
-	public float buildTime;
-	public int cellCount = 6;
 	public FibonacciCell cellObj;
 	public GameObject trail;
+    public float speed = 0.025f;
+    public int cellsAhead = 10;
 
-	private List<FibonacciCell> _cells = new List<FibonacciCell>();
-	private LineRenderer _line;
+    private List<FibonacciCell> _cells = new List<FibonacciCell>();
 	private int _currentCell;
 	private float _curveT;
-	private bool _complete;
 	private FibonacciCell _selectedCell;
+    private int pointCount;
 
 	float n1 = 0,n2 = 1,n3;
 
 	void Start () 
 	{
-		_line = GetComponent<LineRenderer> ();
-		_line.SetVertexCount(cellCount * resolution + 1);
-		StartCoroutine(SetUpSpiral ());
-	}
+        FibonacciCell firstCell = Instantiate(cellObj) as FibonacciCell;
+        float initSize = CalculateFibonacciNumber();
+        firstCell.cellDirection = CellDirection.up;
+
+        firstCell.SetUp(0, 0, initSize, -initSize);
+        _cells.Add(firstCell);
+        _selectedCell = firstCell;
+
+        for (int i = 0; i < cellsAhead; ++i)
+        {
+            NextCell();
+        }
+    }
 
 	void Update () 
 	{
-		if(!_complete)
-			return;
-
 		Vector3 start = Vector3.zero;
 		Vector3 end = Vector3.zero;
 		Vector3 middle = Vector3.zero;
 
 		if(_curveT >= 1.0f)
 		{
-			if(_currentCell < _cells.Count)
-				_currentCell ++;
-
-			if(_currentCell >= _cells.Count)
-				return;	
-			_curveT = 0;
-		}
-
-		_selectedCell = _cells [_currentCell];
+            NextCell();
+            _selectedCell = _cells[++_currentCell];
+            _curveT = 0;
+        }
 		SetInterpPoints (out start, out end, out middle);
-		trail.transform.position = CurveVelocity(_curveT,start,middle, end);
-		_curveT += 0.025f;
+        trail.transform.position = CurveVelocity(_curveT,start,middle, end);
+
+        float distanceToCenter = trail.transform.position.magnitude;
+
+        float camSize = Mathf.Lerp(start.magnitude, end.magnitude, _curveT) + 2;
+        if (camSize < 10) camSize = 10;
+        Camera.main.orthographicSize = camSize;
+
+        _curveT += speed;
 	}
 
 	float CalculateFibonacciNumber()
@@ -63,100 +67,78 @@ public class Fibonacci : MonoBehaviour {
 		return n3;
 	}
 
-	IEnumerator SetUpSpiral()
-	{
-		FibonacciCell firstCell = Instantiate (cellObj) as FibonacciCell;
-		float initSize = CalculateFibonacciNumber ();
-		firstCell.cellDirection = CellDirection.up;
+    void NextCell()
+    {
+        int i = _cells.Count - 1;
+        int modulos = i % 4;
+		FibonacciCell cell = null;
+		float size = CalculateFibonacciNumber();
+		FibonacciCell lastCell = null;
 
-		StartCoroutine(firstCell.SetUp(0,0,initSize,-initSize));
-		_line.SetPosition (0, new Vector3 (initSize, -initSize));
-		_cells.Add (firstCell);
+		float top = 0;
+		float left = 0;
+		float right = 0;
+		float bottom = 0;
+        		
+		if(_cells.Count > 0)
+			lastCell = _cells[i];
 
-		yield return new WaitForSeconds (buildTime);
-		
-		for (int i = 0; i < cellCount;i++)
-		{
-			int modulos = i % 4;
-			FibonacciCell cell = null;
-			float size = CalculateFibonacciNumber();
-			FibonacciCell lastCell = null;
+		//x = left, y == top
+		switch(modulos)
+		{				
+		case 0:
+			//left
+			cell = Instantiate(cellObj) as FibonacciCell;
+			cell.cellDirection = CellDirection.left;
+            				
+			top = lastCell.top;
+			left = lastCell.left - size;
+			right = lastCell.left;
+			bottom = lastCell.top - size;            
+            cell.SetUp(top,left,right,bottom);
+            break;
+		case 1:
+			//down
+			cell = Instantiate(cellObj) as FibonacciCell;
+			cell.cellDirection = CellDirection.down;
 
-			float top;
-			float left;
-			float right;
-			float bottom;
+			top = lastCell.bottom;
+			left = lastCell.left;
+			right = lastCell.left + size;
+			bottom = top - size;
+            			
+			cell.SetUp(top,left,right,bottom);
+                break;
+		case 2:
+			//right
+			cell = Instantiate(cellObj) as FibonacciCell;
+			cell.cellDirection = CellDirection.right;
 
-			if(_cells.Count > 0)
-				lastCell = _cells[i];
+			bottom = lastCell.bottom;
+			left = lastCell.right;
+			right = left + size;
+			top = bottom + size;
 
-			//x = left, y == top
-			switch(modulos)
-			{
-			case 0:
-				//left
-				cell = Instantiate(cellObj) as FibonacciCell;
-				cell.cellDirection = CellDirection.left;
+			cell.SetUp(top,left,right,bottom);
+                break;
 
-				top = lastCell.top;
-				left = lastCell.left - size;
-				right = lastCell.left;
-				bottom = lastCell.top - size;
+		case 3:
+			//up
+			cell = Instantiate(cellObj) as FibonacciCell;
+			cell.cellDirection = CellDirection.up;
+            				
+			top = lastCell.top + size;
+			left = lastCell.right - size;
+			right = lastCell.right;
+			bottom = lastCell.top;
 
-				_line.SetPosition(i + 1,new Vector3(right,top));
-
-				StartCoroutine(cell.SetUp(top,left,right,bottom));
-				break;
-			case 1:
-				//down
-				cell = Instantiate(cellObj) as FibonacciCell;
-				cell.cellDirection = CellDirection.down;
-
-				top = lastCell.bottom;
-				left = lastCell.left;
-				right = lastCell.left + size;
-				bottom = top - size;
-
-				_line.SetPosition(i + 1,new Vector3(left,top));
-
-				StartCoroutine(cell.SetUp(top,left,right,bottom));
-				break;
-			case 2:
-				//right
-				cell = Instantiate(cellObj) as FibonacciCell;
-				cell.cellDirection = CellDirection.right;
-
-				bottom = lastCell.bottom;
-				left = lastCell.right;
-				right = left + size;
-				top = bottom + size;
-
-				_line.SetPosition(i + 1,new Vector3(left,bottom));
-
-				StartCoroutine(cell.SetUp(top,left,right,bottom));
-				break;
-
-			case 3:
-				//up
-				cell = Instantiate(cellObj) as FibonacciCell;
-				cell.cellDirection = CellDirection.up;
-
-				top = lastCell.top + size;
-				left = lastCell.right - size;
-				right = lastCell.right;
-				bottom = lastCell.top;
-
-				_line.SetPosition(i + 1,new Vector3(right,bottom));
-
-				StartCoroutine(cell.SetUp(top,left,right,bottom));
-				break;
-			}
-			if(cell)
-				_cells.Add(cell);
-			yield return new WaitForSeconds(buildTime);
+			cell.SetUp(top,left,right,bottom);
+            break;
 		}
-
-		_complete = true;
+        if (cell)
+        {
+            _cells.Add(cell);
+        }
 	}
 
 	void SetInterpPoints (out Vector3 start, out Vector3 end, out Vector3 middle)
