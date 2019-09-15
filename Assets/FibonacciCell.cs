@@ -26,6 +26,10 @@ public class FibonacciCell : MonoBehaviour {
 		this.bottom = bottom;
 		this.left = left;
 		this.right = right;
+        top *= Fibonacci.ScaleFactor;
+        bottom *= Fibonacci.ScaleFactor;
+        left *= Fibonacci.ScaleFactor;
+        right *= Fibonacci.ScaleFactor;
         Vector3[] vertices = new Vector3[]{
             new Vector3(left, bottom),
             new Vector3(right, bottom),
@@ -65,7 +69,7 @@ public class FibonacciCell : MonoBehaviour {
         if (hue > 1) hue -= 1;
 
         text.transform.position = new Vector3(left + (right - left) * 0.5f, bottom + (top - bottom) * 0.5f);
-        text.text = (right - left).ToString("F0");
+        text.text = (this.right - this.left).ToString("F0");
         text.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2((right - left) * 0.65f, (top - bottom) * 0.7f);
     }
 
@@ -77,7 +81,13 @@ public class FibonacciCell : MonoBehaviour {
 
     public IEnumerator Start()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.1f);
         text.enableAutoSizing = false;
+        if (text.fontSize < 1)
+        {
+            text.transform.localScale = new Vector3(text.fontSize, text.fontSize, 1);
+            if (text.transform.localScale.x < 0.015f) text.transform.localScale = new Vector3(0.015f, 0.015f, 1);
+            text.fontSize = 1f;
+        }
     }
 }

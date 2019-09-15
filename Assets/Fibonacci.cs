@@ -8,6 +8,7 @@ public class Fibonacci : MonoBehaviour {
 	public TrailRenderer trail;
     public float speed = 0.005f;
     public int cellsAhead = 10;
+    public static float ScaleFactor = 0.01f;
 
     private List<FibonacciCell> _cells = new List<FibonacciCell>();
 	private int _currentCell;
@@ -36,8 +37,9 @@ public class Fibonacci : MonoBehaviour {
         {
             NextCell();
         }
-        trail.endWidth = 0.33f;
+        trail.endWidth = 0.33f * ScaleFactor;
         trail.endColor = Color.white;
+        trail.minVertexDistance *= ScaleFactor;
     }
 
 	void Update () 
@@ -58,13 +60,15 @@ public class Fibonacci : MonoBehaviour {
             nextColor = Color.HSVToRGB(hue, 0.8f, 0.75f);
         }
 		SetInterpPoints (out start, out end, out middle);
-        trail.gameObject.transform.position = CurveVelocity(Mathf.Pow(_curveT, 1.2f),start,middle, end);
+        trail.gameObject.transform.localPosition = CurveVelocity(Mathf.Pow(_curveT, 1.2f),start,middle, end);
 
-        float distanceToCenter = trail.gameObject.transform.position.magnitude;
+        float distanceToCenter = trail.gameObject.transform.localPosition.magnitude;
+        trail.gameObject.transform.localPosition *= ScaleFactor;
 
-        float camSize = Mathf.Lerp(start.magnitude, end.magnitude, _curveT) * 1.25f;
-        if (camSize < 5) camSize = 5;
-        Camera.main.orthographicSize = Mathf.Lerp(Camera.main.orthographicSize, camSize, 0.05f);
+        float camSize = Mathf.Lerp(start.magnitude, end.magnitude, _curveT) * 1.5f; //1.25f;
+        if (camSize < 8) camSize = 8;
+        Camera.main.orthographicSize = Mathf.Lerp(Camera.main.orthographicSize, camSize * ScaleFactor, 0.05f);
+        //Camera.main.transform.localPosition = Vector3.Lerp(Camera.main.transform.localPosition, middle * ScaleFactor, 0.05f);
 
         //trail.endWidth = trail.startWidth;
         trail.startWidth = Camera.main.orthographicSize / 10f;
