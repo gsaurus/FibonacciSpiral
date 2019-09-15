@@ -7,7 +7,6 @@ public class Fibonacci : MonoBehaviour {
 	public FibonacciCell cellObj;
 	public TrailRenderer trail;
     public float speed = 0.005f;
-    public float acc = -0.001f;
     public int cellsAhead = 10;
 
     private List<FibonacciCell> _cells = new List<FibonacciCell>();
@@ -57,7 +56,6 @@ public class Fibonacci : MonoBehaviour {
             hue += 0.05f;
             if (hue > 1) hue -= 1;
             nextColor = Color.HSVToRGB(hue, 0.8f, 0.75f);
-            speed += acc;
         }
 		SetInterpPoints (out start, out end, out middle);
         trail.gameObject.transform.position = CurveVelocity(Mathf.Pow(_curveT, 1.2f),start,middle, end);
@@ -72,7 +70,9 @@ public class Fibonacci : MonoBehaviour {
         trail.startWidth = Camera.main.orthographicSize / 10f;
         trail.startColor = Color.Lerp(previousColor, nextColor, _curveT);
 
-        _curveT += speed;
+        float speedMultiplier = (Mathf.Log10(distanceToCenter) + 1) * 0.5f;
+        if (speedMultiplier < 1) speedMultiplier = 1;
+        _curveT += speed / speedMultiplier;
 
     }
 
