@@ -20,7 +20,7 @@ public class FibonacciCell : MonoBehaviour {
         _line = GetComponent<LineRenderer>();
         text = GetComponentInChildren<TextMeshPro>();
         //GetComponent<Canvas>().worldCamera = Camera.main;
-        _line.positionCount = 4;
+        _line.positionCount = 5;
 
         this.top = top;
 		this.bottom = bottom;
@@ -30,7 +30,8 @@ public class FibonacciCell : MonoBehaviour {
             new Vector3(left, bottom),
             new Vector3(right, bottom),
             new Vector3(right, top),
-            new Vector3(left, top)
+            new Vector3(left, top),
+            new Vector3(left, bottom)
         };
         _line.SetPositions(vertices);
 
@@ -65,7 +66,7 @@ public class FibonacciCell : MonoBehaviour {
 
         text.transform.position = new Vector3(left + (right - left) * 0.5f, bottom + (top - bottom) * 0.5f);
         text.text = (right - left).ToString("F0");
-        text.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2((right - left) * 0.7f, (top - bottom) * 0.7f);
+        text.gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2((right - left) * 0.65f, (top - bottom) * 0.7f);
     }
 
     public void Update()

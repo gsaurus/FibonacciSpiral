@@ -25,13 +25,14 @@ public class Fibonacci : MonoBehaviour {
 	void Start () 
 	{
         FibonacciCell firstCell = Instantiate(cellObj) as FibonacciCell;
-        float initSize = 1;
+        float initSize = 2;//1;
         firstCell.cellDirection = CellDirection.up;
 
         firstCell.SetUp(0, 0, initSize, -initSize);
         _cells.Add(firstCell);
         _selectedCell = firstCell;
 
+        n3 = 2;
         for (int i = 0; i < cellsAhead; ++i)
         {
             NextCell();
@@ -74,7 +75,13 @@ public class Fibonacci : MonoBehaviour {
 
     }
 
-	float CalculateFibonacciNumber()
+    float CalculatePower()
+    {
+        n3 *= 2;
+        return n3;
+    }
+
+    float CalculateFibonacciNumber()
 	{
 		n3 = n1 + n2;
 
@@ -89,7 +96,7 @@ public class Fibonacci : MonoBehaviour {
         int i = _cells.Count - 1;
         int modulos = i % 4;
 		FibonacciCell cell = null;
-		float size = CalculateFibonacciNumber();
+        float size = CalculatePower(); //CalculateFibonacciNumber();
 		FibonacciCell lastCell = null;
 
 		float top = 0;
