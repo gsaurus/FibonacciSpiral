@@ -47,11 +47,12 @@ public class Fibonacci : MonoBehaviour {
 		Vector3 end = Vector3.zero;
 		Vector3 middle = Vector3.zero;
 
-		if(_curveT < 0 || _curveT >= 1.0f)
+        if (_curveT < 0) _curveT = 1.0f;
+		while(_curveT >= 1.0f)
 		{
             NextCell();
             _selectedCell = _cells[_currentCell++];
-            _curveT = 0;
+            _curveT -= 1.0f;
             previousColor = Color.HSVToRGB(hue, 0.8f, 0.75f);
             hue += 0.05f;
             if (hue > 1) hue -= 1;
@@ -59,7 +60,7 @@ public class Fibonacci : MonoBehaviour {
             speed += acc;
         }
 		SetInterpPoints (out start, out end, out middle);
-        trail.gameObject.transform.position = CurveVelocity(_curveT,start,middle, end);
+        trail.gameObject.transform.position = CurveVelocity(Mathf.Pow(_curveT, 1.2f),start,middle, end);
 
         float distanceToCenter = trail.gameObject.transform.position.magnitude;
 
