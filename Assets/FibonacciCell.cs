@@ -14,8 +14,15 @@ public class FibonacciCell : MonoBehaviour {
 
     static float hue = 0.5f;
 
+    private int highlightedCharacterIndex = -1;
+    private static Color32 NormalColor = new Color32(0, 0, 0, 255);
+    private static Color32 HighlightedColor = new Color32(0, 230, 50, 255);
+
+    private float[] highlightTimes;
+
+
     //change size to tlrb
-    public void SetUp(float top, float left, float right , float bottom)
+    public void SetUp(float top, float left, float right , float bottom, float[] highlightTimes = null)
 	{
         _line = GetComponent<LineRenderer>();
         text = GetComponentInChildren<TextMeshPro>();
@@ -26,6 +33,7 @@ public class FibonacciCell : MonoBehaviour {
 		this.bottom = bottom;
 		this.left = left;
 		this.right = right;
+        this.highlightTimes = highlightTimes;
         top *= Fibonacci.ScaleFactor;
         bottom *= Fibonacci.ScaleFactor;
         left *= Fibonacci.ScaleFactor;
@@ -77,11 +85,20 @@ public class FibonacciCell : MonoBehaviour {
     {
         _line.startWidth = Camera.main.orthographicSize / 50f;
         _line.endWidth = _line.startWidth;
+
+        if (highlightTimes != null)
+        {
+            int nextTimeIndex = highlightedCharacterIndex + 1;
+            if (nextTimeIndex < highlightTimes.Length && Time.timeSinceLevelLoad >= highlightTimes[nextTimeIndex])
+            {                
+                HighlightNextCharacter();
+            }
+        }
     }
 
     public IEnumerator Start()
     {
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForEndOfFrame();
         text.enableAutoSizing = false;
         if (text.fontSize < 1)
         {
@@ -89,5 +106,33 @@ public class FibonacciCell : MonoBehaviour {
             if (text.transform.localScale.x < 0.015f) text.transform.localScale = new Vector3(0.015f, 0.015f, 1);
             text.fontSize = 1f;
         }
+    }
+
+
+    private void SetCharacterColor(int charIndex, Color32 color)
+    {
+        int meshIndex = text.textInfo.characterInfo[charIndex].materialReferenceIndex;
+        int vertexIndex = text.textInfo.characterInfo[charIndex].vertexIndex;
+   
+        Color32[] vertexColors = text.textInfo.meshInfo[meshIndex].colors32;
+        vertexColors[vertexIndex + 0] = color;
+        vertexColors[vertexIndex + 1] = color;
+        vertexColors[vertexIndex + 2] = color;
+        vertexColors[vertexIndex + 3] = color;
+    
+        text.UpdateVertexData();
+    }
+
+    private void HighlightNextCharacter()
+    {
+        if (highlightedCharacterIndex >= 0 && highlightedCharacterIndex < text.text.Length)
+        {
+            SetCharacterColor(highlightedCharacterIndex, NormalColor);
+        }
+        if (++highlightedCharacterIndex < text.text.Length)
+        {
+            SetCharacterColor(highlightedCharacterIndex, HighlightedColor);
+        }
+        
     }
 }

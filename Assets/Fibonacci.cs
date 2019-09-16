@@ -11,7 +11,7 @@ public class Fibonacci : MonoBehaviour {
     public static float ScaleFactor = 0.01f;
 
     private List<FibonacciCell> _cells = new List<FibonacciCell>();
-	private int _currentCell;
+	private int _currentCell = -1;
 	private float _curveT = -1f;
 	private FibonacciCell _selectedCell;
     private int pointCount;
@@ -19,6 +19,14 @@ public class Fibonacci : MonoBehaviour {
     private float hue = 0.5f;
     private Color previousColor;
     private Color nextColor;
+
+	private float[][] highlightTimes = {
+		new float[]{0.5f, 0.8f},
+		new float[]{1.0f, 1.5f},
+		new float[]{2.0f, 2.5f},
+		new float[]{3.0f, 3.5f, 4.0f},
+		new float[]{4.1f, 4.2f, 4.3f},
+	};
 
     float n1 = 0,n2 = 1,n3;
 
@@ -28,7 +36,7 @@ public class Fibonacci : MonoBehaviour {
         float initSize = 2;//1;
         firstCell.cellDirection = CellDirection.up;
 
-        firstCell.SetUp(0, 0, initSize, -initSize);
+        firstCell.SetUp(0, 0, initSize, -initSize, highlightTimes[0]);
         _cells.Add(firstCell);
         _selectedCell = firstCell;
 
@@ -52,7 +60,7 @@ public class Fibonacci : MonoBehaviour {
 		while(_curveT >= 1.0f)
 		{
             NextCell();
-            _selectedCell = _cells[_currentCell++];
+            _selectedCell = _cells[++_currentCell];
             _curveT -= 1.0f;
             previousColor = Color.HSVToRGB(hue, 0.8f, 0.75f);
             hue += 0.05f;
@@ -76,7 +84,16 @@ public class Fibonacci : MonoBehaviour {
 
         float speedMultiplier = (Mathf.Log10(distanceToCenter) + 1) * 0.5f;
         if (speedMultiplier < 1) speedMultiplier = 1;
-        _curveT += speed / speedMultiplier;
+		if (_currentCell < highlightTimes.Length)
+		{
+			float previousTime = _currentCell > 0 ? highlightTimes[_currentCell-1][highlightTimes[_currentCell-1].Length - 1] : 0;
+			_curveT = (Time.timeSinceLevelLoad - previousTime) / (highlightTimes[_currentCell][highlightTimes[_currentCell].Length - 1] - previousTime);
+			if (_curveT < 0) _curveT = 0;
+		}
+		else
+		{
+        	_curveT += speed / speedMultiplier;
+		}
 
     }
 
@@ -98,8 +115,8 @@ public class Fibonacci : MonoBehaviour {
 
     void NextCell()
     {
-        int i = _cells.Count - 1;
-        int modulos = i % 4;
+        int lastCellIndex = _cells.Count - 1;
+        int modulos = lastCellIndex % 4;
 		FibonacciCell cell = null;
         float size = CalculatePower(); //CalculateFibonacciNumber();
 		FibonacciCell lastCell = null;
@@ -110,7 +127,7 @@ public class Fibonacci : MonoBehaviour {
 		float bottom = 0;
         		
 		if(_cells.Count > 0)
-			lastCell = _cells[i];
+			lastCell = _cells[lastCellIndex];
 
 		//x = left, y == top
 		switch(modulos)
@@ -123,8 +140,7 @@ public class Fibonacci : MonoBehaviour {
 			top = lastCell.top;
 			left = lastCell.left - size;
 			right = lastCell.left;
-			bottom = lastCell.top - size;            
-            cell.SetUp(top,left,right,bottom);
+			bottom = lastCell.top - size;                        
             break;
 		case 1:
 			//down
@@ -135,9 +151,7 @@ public class Fibonacci : MonoBehaviour {
 			left = lastCell.left;
 			right = lastCell.left + size;
 			bottom = top - size;
-            			
-			cell.SetUp(top,left,right,bottom);
-                break;
+			break;
 		case 2:
 			//right
 			cell = Instantiate(cellObj) as FibonacciCell;
@@ -147,9 +161,7 @@ public class Fibonacci : MonoBehaviour {
 			left = lastCell.right;
 			right = left + size;
 			top = bottom + size;
-
-			cell.SetUp(top,left,right,bottom);
-                break;
+			break;
 
 		case 3:
 			//up
@@ -160,12 +172,17 @@ public class Fibonacci : MonoBehaviour {
 			left = lastCell.right - size;
 			right = lastCell.right;
 			bottom = lastCell.top;
-
-			cell.SetUp(top,left,right,bottom);
             break;
 		}
         if (cell)
         {
+			if (_cells.Count < highlightTimes.Length)
+			{
+				cell.SetUp(top,left,right,bottom, highlightTimes[_cells.Count]);
+			}else
+			{
+				cell.SetUp(top,left,right,bottom);
+			}
             _cells.Add(cell);
         }
 	}
