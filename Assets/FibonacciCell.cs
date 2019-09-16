@@ -127,11 +127,18 @@ public class FibonacciCell : MonoBehaviour {
     {
         if (highlightedCharacterIndex >= 0 && highlightedCharacterIndex < text.text.Length)
         {
-            SetCharacterColor(highlightedCharacterIndex, NormalColor);
+            int index = highlightedCharacterIndex;
+            do
+            {
+                SetCharacterColor(index, NormalColor);
+            }while(--index >= 0 && highlightTimes[index] == highlightTimes[index + 1]);
         }
-        if (++highlightedCharacterIndex < text.text.Length)
+        if (highlightedCharacterIndex < text.text.Length - 1)
         {
-            SetCharacterColor(highlightedCharacterIndex, HighlightedColor);
+            do {
+                SetCharacterColor(++highlightedCharacterIndex, HighlightedColor);
+            }
+            while(highlightedCharacterIndex < text.text.Length - 1 && highlightTimes[highlightedCharacterIndex] == highlightTimes[highlightedCharacterIndex + 1]);
         }
         
     }
